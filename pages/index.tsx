@@ -1,5 +1,27 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import {
+  Layout,
+  Menu,
+  Select,
+  Input,
+  Form,
+  Typography,
+  Divider,
+  Button,
+  Modal,
+  message,
+} from "antd";
+import {
+  AppstoreOutlined,
+  DatabaseOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
+import { formatRupiah, parseRupiah } from "@/helpers/formatIdr";
+
+const { Option } = Select;
+const { Title } = Typography;
+const { Sider, Content } = Layout;
 
 interface Negara {
   id_negara: number;
@@ -8,7 +30,7 @@ interface Negara {
 }
 
 interface Pelabuhan {
-  id_pelabuhan: string;
+  id_pelabuhan: string | number;
   nama_pelabuhan: string;
   id_negara: string;
 }
@@ -32,7 +54,6 @@ export default function DropdownPage() {
     null
   );
   const [selectedBarang, setSelectedBarang] = useState<Barang | null>(null);
-
   const [formBarang, setFormBarang] = useState<Barang | null>(null);
 
   useEffect(() => {
@@ -99,125 +120,209 @@ export default function DropdownPage() {
     }
   }, [selectedPelabuhan]);
 
-  return (
-    <div className="p-8">
-      <h1 className="text-xl font-bold mb-4">Dropdown Selector</h1>
+  const handlePreview = () => {
+    Modal.info({
+      title: "Preview Informasi Barang",
+      width: 600,
+      content: renderPreviewContent(),
+      onOk() {},
+    });
+  };
 
-      <div className="mb-4">
-        <label className="block mb-1 font-medium">Pilih Negara</label>
-        <select
-          className="border p-2 rounded w-full"
-          value={selectedNegara ?? ""}
-          onChange={(e) => setSelectedNegara(Number(e.target.value))}
-        >
-          <option value="" disabled>
-            Pilih Negara
-          </option>
-          {negaras.map((negara) => (
-            <option key={negara.id_negara} value={negara.id_negara}>
-              {negara.kode_negara} - {negara.nama_negara}
-            </option>
-          ))}
-        </select>
+  const renderPreviewContent = () => {
+    if (!formBarang) return <p>Data belum lengkap.</p>;
+
+    return (
+      <div className="space-y-2 pt-2">
+        <p>
+          <strong>Negara:</strong>{" "}
+          {negaras.find((n) => n.id_negara === selectedNegara)?.nama_negara}
+        </p>
+        <p>
+          <strong>Pelabuhan:</strong>{" "}
+          {
+            pelabuhans.find((p) => p.id_pelabuhan === selectedPelabuhan)
+              ?.nama_pelabuhan
+          }
+        </p>
+        <p>
+          <strong>Barang:</strong> {formBarang.nama_barang}
+        </p>
+        <p>
+          <strong>Deskripsi:</strong> {formBarang.description}
+        </p>
+        <p>
+          <strong>Harga:</strong> {formatRupiah(formBarang.harga)}
+        </p>
+        <p>
+          <strong>Diskon:</strong> {formBarang.diskon}%
+        </p>
+        <p>
+          <strong>Total Harga:</strong>{" "}
+          {new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+          }).format(formBarang.harga * (1 - formBarang.diskon / 100))}
+        </p>
       </div>
+    );
+  };
 
-      {pelabuhans?.length > 0 && (
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">Pilih Pelabuhan</label>
-          <select
-            className="border p-2 rounded w-full"
-            value={selectedPelabuhan ?? ""}
-            onChange={(e) => setSelectedPelabuhan(Number(e.target.value))}
-          >
-            <option value="" disabled>
-              Pilih Pelabuhan
-            </option>
-            {pelabuhans.map((p) => (
-              <option key={p.id_pelabuhan} value={p.id_pelabuhan}>
-                {p.nama_pelabuhan}
-              </option>
-            ))}
-          </select>
+  return (
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sider
+        width={220}
+        style={{ background: "#fff", borderRight: "1px solid #f0f0f0" }}
+      >
+        <div className="flex items-center justify-center gap-2 px-4 py-5 border-b border-gray-200">
+          <img src="/pelindo.png" alt="Logo" className="w-40" />
         </div>
-      )}
 
-      {barangs.length > 0 && (
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">Pilih Barang</label>
-          <select
-            className="border p-2 rounded w-full"
-            value={selectedBarang ? JSON.stringify(selectedBarang) : ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSelectedBarang(value ? JSON.parse(value) : null);
-            }}
-          >
-            <option value="" disabled>
-              Pilih Barang
-            </option>
+        <Menu
+          mode="inline"
+          defaultSelectedKeys={["1"]}
+          style={{ borderRight: "none" }}
+          className="px-2 pt-4"
+        >
+          <Menu.Item key="1" icon={<AppstoreOutlined />} className="rounded-md">
+            Home
+          </Menu.Item>
+        </Menu>
+      </Sider>
 
-            {barangs.map((b) => (
-              <option key={b.id_barang} value={JSON.stringify(b)}>
-                {b.id_barang} - {b.nama_barang}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      {formBarang && (
-        <div className="mt-6 p-4 border rounded bg-gray-100 space-y-4">
-          <div>
-            <label className="block font-medium mb-1">Deskripsi</label>
-            <textarea
-              className="w-full border rounded p-2"
-              value={formBarang.description}
-              readOnly
-            />
-          </div>
+      <Layout>
+        <Content
+          style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}
+        >
+          <Title level={3}>Formulir Informasi Barang</Title>
 
-          <div>
-            <label className="block font-medium mb-1">Diskon (%)</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                className="w-full border rounded p-2"
-                value={formBarang.diskon}
-                onChange={(e) =>
-                  setFormBarang({
-                    ...formBarang,
-                    diskon: Number(e.target.value),
-                  })
+          <Form layout="vertical">
+            <Form.Item label="Pilih Negara">
+              <Select
+                showSearch
+                placeholder="Pilih Negara"
+                optionFilterProp="children"
+                onChange={(value) => setSelectedNegara(value)}
+                value={selectedNegara || undefined}
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
-              />
-              %
-            </div>
-          </div>
+              >
+                {negaras.map((n) => (
+                  <Option key={n.id_negara} value={n.id_negara}>
+                    {n.kode_negara} - {n.nama_negara}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <div>
-            <label className="block font-medium mb-1">Harga (Rp)</label>
-            <input
-              type="number"
-              className="w-full border rounded p-2"
-              value={formBarang.harga}
-              onChange={(e) =>
-                setFormBarang({ ...formBarang, harga: Number(e.target.value) })
-              }
-            />
-          </div>
+            <Form.Item label="Pilih Pelabuhan">
+              <Select
+                showSearch
+                placeholder="Pilih Pelabuhan"
+                optionFilterProp="children"
+                onChange={(value) => setSelectedPelabuhan(value)}
+                value={selectedPelabuhan || undefined}
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+              >
+                {pelabuhans.map((p) => (
+                  <Option key={p.id_pelabuhan} value={p.id_pelabuhan}>
+                    {p.nama_pelabuhan}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <div>
-            <label className="block font-medium mb-1">Total Harga</label>
-            <input
-              type="number"
-              className="w-full border rounded p-2 bg-gray-200"
-              value={(formBarang.harga * (1 - formBarang.diskon / 100)).toFixed(
-                0
-              )}
-              readOnly
-            />
-          </div>
-        </div>
-      )}
-    </div>
+            <Form.Item label="Pilih Barang">
+              <Select
+                showSearch
+                placeholder="Pilih Barang"
+                optionFilterProp="children"
+                onChange={(value) => {
+                  const found = barangs.find(
+                    (b) => b.id_barang === Number(value)
+                  );
+                  setSelectedBarang(found || null);
+                }}
+                value={selectedBarang?.id_barang || undefined}
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+              >
+                {barangs.map((b) => (
+                  <Option key={b.id_barang} value={b.id_barang}>
+                    {b.id_barang} - {b.nama_barang}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            {formBarang && (
+              <>
+                <Divider />
+                <Form.Item label="Deskripsi">
+                  <Input.TextArea value={formBarang.description} readOnly />
+                </Form.Item>
+                <Form.Item label="Diskon (%)">
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      className="w-24"
+                      type="number"
+                      value={formBarang.diskon}
+                      onChange={(e) =>
+                        setFormBarang({
+                          ...formBarang,
+                          diskon: Number(e.target.value),
+                        })
+                      }
+                    />
+                    %
+                  </div>
+                </Form.Item>
+                <Form.Item label="Harga (Rp)">
+                  <Input
+                    value={formatRupiah(formBarang.harga)}
+                    onChange={(e) =>
+                      setFormBarang({
+                        ...formBarang,
+                        harga: parseRupiah(e.target.value),
+                      })
+                    }
+                  />
+                </Form.Item>
+                <Form.Item label="Total Harga">
+                  <Input
+                    value={formatRupiah(
+                      formBarang.harga * (1 - formBarang.diskon / 100)
+                    )}
+                    readOnly
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <div className="flex gap-2 justify-end">
+                    <Button onClick={handlePreview}>Preview</Button>
+                    <Button
+                      type="primary"
+                      onClick={() => message.success("Berhasil submit!")}
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                </Form.Item>
+              </>
+            )}
+          </Form>
+        </Content>
+      </Layout>
+    </Layout>
   );
 }
