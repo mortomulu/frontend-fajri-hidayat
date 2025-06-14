@@ -62,7 +62,7 @@ export default function DropdownPage() {
 
   useEffect(() => {
     axios
-      .get("http://202.157.176.100:3001/negaras")
+      .get("/api/negaras")
       .then((res) => {
         setNegaras(res.data);
         const indonesia = res.data.find((n: Negara) => n.id_negara === 7);
@@ -74,11 +74,7 @@ export default function DropdownPage() {
   useEffect(() => {
     if (selectedNegara !== null) {
       axios
-        .get(
-          `http://202.157.176.100:3001/pelabuhans?filter=${encodeURIComponent(
-            JSON.stringify({ where: { id_negara: selectedNegara } })
-          )}`
-        )
+        .get(`/api/pelabuhans?id_negara=${selectedNegara}`)
         .then((res) => {
           setPelabuhans(res.data);
           const pelabuhan = res.data.find(
@@ -100,11 +96,7 @@ export default function DropdownPage() {
   useEffect(() => {
     if (selectedPelabuhan !== null) {
       axios
-        .get(
-          `http://202.157.176.100:3001/barangs?filter=${encodeURIComponent(
-            JSON.stringify({ where: { id_pelabuhan: selectedPelabuhan } })
-          )}`
-        )
+        .get(`/api/barangs?id_pelabuhan=${selectedPelabuhan}`)
         .then((res) => {
           setBarangs(res.data);
           const barang = res.data.find((b: Barang) => b.id_barang === 11);
